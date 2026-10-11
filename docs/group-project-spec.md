@@ -26,6 +26,7 @@ A Group Project is a shared ledger for a trip, event, class project, household o
 ## 3. Members, roles and joining
 
 - The creator is the first admin. Admins can promote other members to admin.
+- **Add-expense permission:** by default a member can view but not add expenses. An admin grants the "can add expenses" permission per member (and can take it back), so nobody adds entries or categories by mistake. Admins always have it.
 - Join via link, QR code or code. A new person (including a guest) goes to a **pending list**. Admin approves or rejects.
 - After joining, the member sees the project's **WhatsApp and Telegram group links** (if set). They stay visible in project info.
 - **Admin leaves:** other admins continue. If none exist, the earliest-joined member becomes admin.
@@ -61,7 +62,7 @@ Members can add expenses on behalf of others.
 
 **Categories**
 - Default set: Food, Groceries, Transport, Fuel, Accommodation, Tickets & Entry, Shopping, Medical, Tips, Other.
-- Admin can add, rename and hide categories.
+- Any member with the add-expense permission can add a new category while entering an expense. Admins can also rename and hide categories.
 
 ## 5. Group cost vs. personal cost
 
@@ -100,7 +101,10 @@ Group total is 12,000 (the 1,000 gift is excluded).
 
 - **Simplified debts:** the app suggests the minimum number of payments, and shows the group part and personal part of each balance.
 - **Record a payment:** amount, method (cash, bKash, bank, etc.), optional proof photo. Partial payments are allowed. The receiver confirms or disputes it.
-- **Contribution transfer:** a member gives money to one **or several** members at once as part of their contribution to the project, recorded as one entry with an amount per recipient. Each recipient confirms their part. It changes balances the same way a payment does, and is labelled "Contribution".
+- **Contribution transfer:** a member (A) gives money to one **or several** members (B, C) at once, recorded as one entry with an amount per recipient. Each recipient confirms their part.
+  - It works exactly like a settlement payment of dues: it adjusts the balances of the giver and the receivers.
+  - It is **not an expense**: it never adds to the group total, the budget spent, or anyone's costs.
+  - It is added to the giver's **contribution** figure in the project, which shows in the Members tab and the member's own breakdown.
 - **WhatsApp message generator:** a ready-to-send reminder, for example "Rafi, you owe Sara 1,200 for Cox's Bazar trip".
 
 ## 8. Budget and dashboard
@@ -131,7 +135,7 @@ Group total is 12,000 (the 1,000 gift is excluded).
 - Members can upload photos and videos in the Gallery tab.
 - Media is sent to the project's linked **Telegram group** by a project bot. The gallery shows previews and full view.
 - Uploads made offline are queued and sent when the network returns.
-- An admin links the Telegram group and adds the bot to it.
+- An admin links the Telegram group and adds the bot to it (step-by-step in Appendix A).
 - The bot token is kept on the server only, never in the app.
 - Original-quality files are sent as documents, so Telegram doesn't compress them.
 - Thumbnails are cached on the phone so the gallery opens offline.
@@ -156,8 +160,40 @@ Group total is 12,000 (the 1,000 gift is excluded).
 
 ---
 
-## Open items
-1. Who can see NID, bank account and bKash numbers? Proposed: bKash and bank visible to all members (needed for payments), NID visible only to the owner and admins.
-2. Can any member add a new category, or only admins? Proposed: admins only.
-3. "More than half" rule for Group tagging: confirm it, or choose a different threshold.
-4. Is the contribution transfer correctly understood (see section 7)?
+## Decisions confirmed
+- bKash and bank details are visible to all members. NID is visible only to the owner and admins.
+- Group tagging uses the "more than half of members" rule.
+- Contribution transfers work as settlement payments and never count as costs.
+
+---
+
+## Appendix A: Creator's guide to Telegram and WhatsApp groups
+
+Both groups are optional. Telegram gives you the photo gallery. WhatsApp is only a chat link (it cannot store gallery media).
+
+### A1. Telegram group + gallery (recommended)
+1. **Create the group.** In Telegram: tap the pencil/new-message icon → *New Group* → add at least one person (you can remove them later) → name it after your project → *Create*.
+2. **Get the invite link.** Open the group → tap the group name → *Invite to Group via Link* (or *Add Members → Invite via link*) → *Copy link*. Paste it into your project's **Telegram link** field in the app. New members see it after they are approved.
+3. **Open the app's linking screen.** In the project → Settings → *Gallery / Telegram* → *Link Telegram group*. The app shows a short one-time code (for example `K7Q-29M`) and the bot's username.
+4. **Add the bot to the group.** In the Telegram group → *Add Member* → search the bot's username → add it.
+5. **Make the bot an admin (recommended).** Group info → *Administrators* → *Add Administrator* → pick the bot. Only the "Post messages" and "Delete messages" rights are needed. This prevents delivery problems in larger groups.
+6. **Link.** In the group chat send: `/link K7Q-29M`. The bot replies "Linked to <Project name>", and the app shows the Gallery as connected. The code expires after 15 minutes and works once.
+7. **Upload.** Members upload from the Gallery tab. The photo is relayed into the Telegram group and shows in the app gallery.
+
+Tips:
+- Everyone in the Telegram group can see the photos, so only invite project members via the link, and keep the group private.
+- If you remove the bot or delete the group, the gallery stops working. Use *Download all media* regularly.
+- To unlink: project Settings → *Gallery / Telegram* → *Unlink* (the old photos stay in Telegram).
+- Optional, for advanced creators: you can use your own bot instead of the app's bot. In Telegram open *@BotFather* → send `/newbot` → choose a name and username → copy the token it gives you → paste it in *Gallery / Telegram → Use my own bot*. Then follow steps 4 to 6 with your own bot. Never share the token anywhere else.
+
+### A2. WhatsApp group
+1. **Create the group.** WhatsApp → *New chat* → *New group* → add members → name it after the project → create.
+2. **Get the invite link.** Open the group → tap the group name → *Invite to group via link* → *Copy link*.
+3. **Add it to the project.** Paste the link into the project's **WhatsApp link** field in the app.
+4. **Use it.** Members approved into the project see this link and can join the chat. The app's reminder generator opens WhatsApp with a ready message (for example a settlement reminder) that you send yourself. The app does not read or post in WhatsApp automatically.
+
+### A3. What the creator should do on day one
+1. Create the project (name only is required), set the budget if known.
+2. Create the Telegram and/or WhatsApp group and paste the links.
+3. Share the project's join link/QR in the chat.
+4. Approve join requests, then grant "can add expenses" to the members who should record costs.
