@@ -1,11 +1,12 @@
 import { DatabaseSync } from 'node:sqlite';
 import type { AuthorityStore, ProjectState, StoredOp } from '@bm/core';
+import type { UserStore } from './auth';
 
 /**
  * SQLite storage for the sync server. The same schema works on Cloudflare D1 / Durable Objects.
  * Each commit (append op + save state + refresh indexes) is one transaction.
  */
-export class SqliteStore implements AuthorityStore {
+export class SqliteStore implements AuthorityStore, UserStore {
   private db: DatabaseSync;
 
   constructor(path = ':memory:') {
@@ -31,6 +32,11 @@ export class SqliteStore implements AuthorityStore {
         project_id TEXT NOT NULL,
         code TEXT NOT NULL,
         message TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        secret_hash TEXT NOT NULL,
+        created_at INTEGER NOT NULL DEFAULT (unixepoch())
       );
       CREATE TABLE IF NOT EXISTS memberships (
         project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
@@ -102,6 +108,15 @@ export class SqliteStore implements AuthorityStore {
 
   async deleteProject(projectId: string) {
     this.db.prepare('DELETE FROM projects WHERE id = ?').run(projectId);
+  }
+
+  async getUserSecretHash(userId: string) {
+    const row = this.db.prepare('SELECT secret_hash FROM users WHERE id = ?').get(userId) as { secret_hash: string } | undefined;
+    return row?.secret_hash ?? null;
+  }
+
+  async insertUser(userId: string, secretHash: string) {
+    return Number(this.db.prepare('INSERT OR IGNORE INTO users (id, secret_hash) VALUES (?, ?)').run(userId, secretHash).changes) === 1;
   }
 
   close() {

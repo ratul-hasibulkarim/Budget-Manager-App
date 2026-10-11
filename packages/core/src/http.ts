@@ -49,8 +49,9 @@ export class ApiClient implements Transport {
     }
   }
 
-  registerDevice() {
-    return this.call<{ userId: string; token: string }>('POST', '/v1/auth/device');
+  /** Registers this phone's self-made account (or gets a fresh one when called without arguments). */
+  registerDevice(account?: { userId: string; secret: string }) {
+    return this.call<{ userId: string; token: string }>('POST', '/v1/auth/device', account ?? {});
   }
 
   async push(projectId: string, ops: Op[]): Promise<PushResult[]> {

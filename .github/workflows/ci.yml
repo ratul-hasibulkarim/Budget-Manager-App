@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm -r typecheck
+      - name: Unit tests (core rules, sync simulation, server)
+        run: pnpm -r test
+      - name: Browser tests (web build of the app)
+        working-directory: apps/mobile
+        run: |
+          npx playwright install --with-deps chromium
+          pnpm e2e

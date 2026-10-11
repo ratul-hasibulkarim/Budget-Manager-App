@@ -20,7 +20,12 @@ export function createApp(deps: { authority: Authority; auth: Auth; now?: () => 
 
   app.get('/health', (c) => c.json({ ok: true }));
 
-  app.post('/v1/auth/device', async (c) => c.json(await auth.issue()));
+  app.post('/v1/auth/device', async (c) => {
+    const body = await c.req.json<{ userId?: string; secret?: string }>().catch(() => ({}) as { userId?: string; secret?: string });
+    if (!body.userId) return c.json(await auth.issue());
+    const result = await auth.register(body.userId, body.secret ?? '');
+    return result ? c.json(result) : c.json({ error: 'id_taken' }, 409);
+  });
 
   const v1 = new Hono<Env>();
   v1.use('*', async (c, next) => {

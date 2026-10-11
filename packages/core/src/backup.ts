@@ -9,6 +9,11 @@ export interface BackupFile {
   format: 1;
   exportedAt: number;
   userId: string;
+  /**
+   * The phone's account (id + secret), so a new phone restored from this file is the same
+   * person and keeps access to their groups. Keep backup files private.
+   */
+  account?: { userId: string; secret: string };
   projects: ProjectDoc[];
   checksum: string;
 }
@@ -25,9 +30,9 @@ function checksum(text: string): string {
   return h.toString(16).padStart(8, '0');
 }
 
-export function createBackup(userId: string, projects: ProjectDoc[], now: number): string {
-  const body = JSON.stringify(projects);
-  const file: BackupFile = { app: 'budget-manager', format: 1, exportedAt: now, userId, projects, checksum: checksum(body) };
+export function createBackup(userId: string, projects: ProjectDoc[], now: number, account?: { userId: string; secret: string }): string {
+  const body = JSON.stringify([projects, account ?? null]);
+  const file: BackupFile = { app: 'budget-manager', format: 1, exportedAt: now, userId, account, projects, checksum: checksum(body) };
   return JSON.stringify(file);
 }
 
@@ -39,7 +44,7 @@ export function readBackup(text: string): BackupFile {
     throw new BackupError('Not a backup file');
   }
   if (file?.app !== 'budget-manager' || file.format !== 1 || !Array.isArray(file.projects)) throw new BackupError('Not a backup file');
-  if (checksum(JSON.stringify(file.projects)) !== file.checksum) throw new BackupError('The backup file is damaged');
+  if (checksum(JSON.stringify([file.projects, file.account ?? null])) !== file.checksum) throw new BackupError('The backup file is damaged');
   return file;
 }
 

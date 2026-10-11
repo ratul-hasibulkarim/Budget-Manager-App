@@ -25,9 +25,39 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
+export interface UserStore {
+  /** Returns the stored secret hash for a user, or null if unknown. */
+  getUserSecretHash(userId: string): Promise<string | null>;
+  /** Inserts the user if absent. Returns false if the id is already taken. */
+  insertUser(userId: string, secretHash: string): Promise<boolean>;
+}
+
+export const USER_ID_RE = /^u[A-Za-z0-9_-]{10,40}$/;
+
 export class Auth {
-  constructor(private readonly secret: string) {
+  constructor(
+    private readonly secret: string,
+    private readonly users?: UserStore,
+  ) {
     if (secret.length < 32) throw new Error('AUTH_SECRET must be at least 32 characters');
+  }
+
+  /**
+   * Offline-first accounts: the phone makes up its own user id and secret on first launch (so it can
+   * work before ever reaching the server) and registers them here the first time it is online.
+   * The first registration binds the id to that secret; later calls must present the same secret.
+   */
+  async register(userId: string, deviceSecret: string): Promise<{ userId: string; token: string } | null> {
+    if (!this.users) throw new Error('No user store');
+    if (!USER_ID_RE.test(userId) || typeof deviceSecret !== 'string' || deviceSecret.length < 20 || deviceSecret.length > 200) return null;
+    const hash = await hmac(this.secret, `secret:${deviceSecret}`);
+    const existing = await this.users.getUserSecretHash(userId);
+    if (existing === null) {
+      if (!(await this.users.insertUser(userId, hash))) return null;
+    } else if (!timingSafeEqual(existing, hash)) {
+      return null;
+    }
+    return { userId, token: `${userId}.${await hmac(this.secret, userId)}` };
   }
 
   async issue(): Promise<{ userId: string; token: string }> {
@@ -41,7 +71,7 @@ export class Auth {
     const dot = token.lastIndexOf('.');
     if (dot <= 0) return null;
     const userId = token.slice(0, dot);
-    if (!/^u[A-Za-z0-9_-]{10,40}$/.test(userId)) return null;
+    if (!USER_ID_RE.test(userId)) return null;
     return timingSafeEqual(token.slice(dot + 1), await hmac(this.secret, userId)) ? userId : null;
   }
 }

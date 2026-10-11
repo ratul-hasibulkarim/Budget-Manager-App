@@ -23,7 +23,7 @@ function server() {
   const store = new SqliteStore(':memory:');
   const authority = new Authority(store);
   let clock = Date.UTC(2026, 0, 1);
-  const app = createApp({ authority, auth: new Auth(SECRET), now: () => clock });
+  const app = createApp({ authority, auth: new Auth(SECRET, store), now: () => clock });
   let online = true;
   const fetchFn = async (url: string, init?: { method?: string; headers?: Record<string, string>; body?: string }) => {
     if (!online) throw new Error('network down');
@@ -93,6 +93,19 @@ describe('auth', () => {
     expect((await s.app.request('/v1/projects', { headers: { Authorization: `Bearer ${forged}` } })).status).toBe(401);
     expect((await s.app.request('/v1/projects', { headers: { Authorization: `Bearer uotheruserxxxxxx.${token.split('.')[1]}` } })).status).toBe(401);
     expect(() => new Auth('short')).toThrow();
+  });
+  it('offline-first accounts: the first registration binds the id to its secret', async () => {
+    const s = server();
+    const reg = (userId: string, secret: string) =>
+      s.app.request('/v1/auth/device', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, secret }) });
+    const first = await reg('uDeviceMadeId01', 'a-long-device-secret-1234');
+    expect(first.status).toBe(200);
+    const { token } = (await first.json()) as { token: string };
+    expect((await s.app.request('/v1/projects', { headers: { Authorization: `Bearer ${token}` } })).status).toBe(200);
+    expect((await reg('uDeviceMadeId01', 'a-long-device-secret-1234')).status).toBe(200); // same phone again
+    expect((await reg('uDeviceMadeId01', 'someone-elses-secret-999')).status).toBe(409); // cannot steal the id
+    expect((await reg('bad id', 'a-long-device-secret-1234')).status).toBe(409);
+    expect((await reg('uDeviceMadeId02', 'short')).status).toBe(409);
   });
   it('validates request bodies', async () => {
     const s = server();

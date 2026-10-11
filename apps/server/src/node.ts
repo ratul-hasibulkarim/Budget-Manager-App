@@ -8,7 +8,7 @@ const port = Number(process.env.PORT ?? 8787);
 const secret = process.env.AUTH_SECRET ?? (process.env.NODE_ENV === 'production' ? '' : 'dev-secret-change-me-dev-secret-change-me');
 const store = new SqliteStore(process.env.DB_PATH ?? 'budget-manager.sqlite');
 const authority = new Authority(store);
-const app = createApp({ authority, auth: new Auth(secret) });
+const app = createApp({ authority, auth: new Auth(secret, store) });
 
 // Daily housekeeping: auto-archive idle group projects, purge 30-day-old trash.
 const sweep = () => authority.sweep(Date.now()).then((r) => r.archived.length + r.purged.length && console.log('sweep', r));

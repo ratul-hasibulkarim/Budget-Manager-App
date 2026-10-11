@@ -174,6 +174,9 @@ describe('backup', () => {
     expect(() => readBackup(text.replace('"Trip"', '"Trap"'))).toThrow('damaged');
     expect(() => readBackup('{}')).toThrow('Not a backup');
     expect(() => readBackup('nope')).toThrow('Not a backup');
+    const withAccount = createBackup('A', [doc], T0, { userId: 'A', secret: 's3cret-s3cret-s3cret' });
+    expect(readBackup(withAccount).account).toEqual({ userId: 'A', secret: 's3cret-s3cret-s3cret' });
+    expect(() => readBackup(withAccount.replace('s3cret-s3cret-s3cret', 'stolen-stolen-stolen'))).toThrow('damaged');
   });
   it('merging a restore never duplicates or drops changes', () => {
     const log = groupWith(['A', 'B']).log;
