@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.expo/
+web-build/
+*.sqlite
+*.sqlite-*
+.env
+.env.*
+test-results/
+playwright-report/
+*.tsbuildinfo
+.DS_Store
