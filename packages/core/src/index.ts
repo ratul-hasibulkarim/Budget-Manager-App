@@ -13,3 +13,4 @@ export * from './backup';
 export * from './activity';
 export * from './messages';
 export * from './ids';
+export * from './http';
